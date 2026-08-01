@@ -56,7 +56,10 @@
         <button id="btn-edit-done" class="primary" type="button">Done</button>
       </span>
     </div>
-    <main id="grid" class="grid"></main>
+    <div class="board-layout">
+      <aside id="sidebar" class="sidebar" aria-label="Quick phrases and boards"></aside>
+      <main id="grid" class="grid"></main>
+    </div>
   </section>
 
   <!-- ============ Keyboard (type to talk) ============ -->
@@ -130,10 +133,10 @@
         <legend>Color</legend>
         <div id="color-row" class="color-row"></div>
       </fieldset>
-      <label>When tapped
+      <label id="row-action">When tapped
         <select id="fld-action"></select>
       </label>
-      <label class="check-row">
+      <label class="check-row" id="row-hidden">
         <input type="checkbox" id="fld-hidden">
         <span>Hide for now <small>(teaching tool: invisible to the child, keeps its spot)</small></span>
       </label>
@@ -208,6 +211,10 @@
           <option value="xl">Extra large</option>
         </select>
       </label>
+      <label class="check-row">
+        <input type="checkbox" id="fld-sidebar">
+        <span>Show sidebar <small>(Quick Fires + board shortcuts)</small></span>
+      </label>
       <label>Hold to activate <small>(helps with shaky or exploring hands)</small>
         <select id="fld-holdms">
           <option value="0">Off - taps work instantly</option>
@@ -254,7 +261,7 @@
       </div>
       <p class="attribution">Free & open - symbols by <a href="https://arasaac.org" target="_blank" rel="noopener">ARASAAC</a> (CC BY-NC-SA). Text-to-speech uses this device's built-in voices.</p>
       <!-- Keep this number in step with VERSION in sw.js -->
-      <p class="attribution">Our Voice version 5</p>
+      <p class="attribution">Our Voice version 7</p>
       <div class="dlg-buttons">
         <span class="spacer"></span>
         <button type="submit" class="primary">Close</button>

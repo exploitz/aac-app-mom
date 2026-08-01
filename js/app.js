@@ -2,8 +2,9 @@
 import * as db from './db.js';
 import { mkProfile, mkBoard } from './model.js';
 import { seedIfEmpty } from './seed.js';
-import { renderGrid, renderSentence, kidTap, goBack, speakSentence } from './board.js';
-import { initEditor, enterEdit, editCellTap, renderAdminProfiles } from './editor.js';
+import { renderGrid, renderSentence, renderSidebar, kidTap, goBack, speakSentence } from './board.js';
+import { initEditor, enterEdit, editCellTap, openQuickFireDialog, renderAdminProfiles } from './editor.js';
+import { defaultQuickFires } from './seed.js';
 import { initTools, renderHistory } from './tools.js';
 
 const $ = id => document.getElementById(id);
@@ -25,6 +26,7 @@ function rerender() {
   if (!state.profile) return;
   document.body.dataset.uisize = state.profile.uiSize || 'standard';
   renderSentence(state);
+  renderSidebar(state, openQuickFireDialog);
   renderGrid(state, onCell);
 }
 
@@ -67,6 +69,12 @@ async function showPicker() {
 
 async function openProfile(profile) {
   state.profile = profile;
+  if (!profile.quickFires) {
+    // Older profiles predate the sidebar - give them the starter phrases once.
+    profile.quickFires = defaultQuickFires();
+    if (profile.sidebar === undefined) profile.sidebar = true;
+    await db.put('profiles', profile);
+  }
   state.boards = new Map((await db.boardsForProfile(profile.id)).map(b => [b.id, b]));
   state.currentBoardId = profile.homeBoardId;
   state.navStack = [];

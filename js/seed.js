@@ -129,6 +129,18 @@ export function boardFromTemplate(key, profileId) {
   return board;
 }
 
+// Always-available instant phrases for the sidebar (TD Snap calls these
+// Quickfires). Filled into any profile that doesn't have its own yet.
+export function defaultQuickFires() {
+  return [
+    E('wait', '🖐', { speak: 'Wait please' }),
+    E('help', '🙋', { speak: 'I need help' }),
+    E('break', '😮‍💨', { speak: 'I need a break' }),
+    E('come here', '👋', { speak: 'Come here please' }),
+    E('I love you', '❤️', {}),
+  ];
+}
+
 const link = (template, board) =>
   E(template.name.toLowerCase(), template.emoji, { action: { type: 'board', boardId: board.id } });
 

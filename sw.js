@@ -1,6 +1,6 @@
 // Offline-first service worker: pre-cache the app shell, serve cache-first.
 // Bump VERSION on every deploy so clients pick up new files.
-const VERSION = 'v5';
+const VERSION = 'v7';
 const CACHE = `ourvoice-${VERSION}`;
 const SHELL = [
   './',
@@ -26,7 +26,13 @@ const SHELL = [
 ];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  // no-cache: bypass the HTTP cache so a new version never pre-caches stale
+  // files (GitHub Pages serves with max-age=600).
+  e.waitUntil(
+    caches.open(CACHE)
+      .then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'no-cache' }))))
+      .then(() => self.skipWaiting()),
+  );
 });
 
 self.addEventListener('activate', e => {

@@ -29,8 +29,9 @@ const EMOJI = [
 
 let ctx = null;
 
-// Dialog session state for the button editor.
-let editIndex = -1;
+// Dialog session state for the button editor. The dialog edits either a board
+// cell or a sidebar Quick Fire; editTarget says which.
+let editTarget = { kind: 'cell', index: -1 }; // {kind:'cell'|'qf', index} (-1 = new)
 let pendingImage = null;   // {type:'emoji',value} | {type:'image',imageId} | {type:'image',blob}
 let pendingColor = '';
 let pendingSound = null;   // {soundId} (existing) | {blob} (fresh recording) | null
@@ -112,7 +113,11 @@ export async function editCellTap(index, btn) {
     ctx.rerender();
     return;
   }
-  openButtonDialog(index, btn);
+  openButtonDialog({ kind: 'cell', index }, btn);
+}
+
+export function openQuickFireDialog(index, qf) {
+  openButtonDialog({ kind: 'qf', index }, qf);
 }
 
 // ---------------- Banner ----------------
@@ -132,7 +137,7 @@ function wireBanner() {
       ctx.toast('No empty spaces - add rows in Board settings');
       return;
     }
-    openButtonDialog(slot, null);
+    openButtonDialog({ kind: 'cell', index: slot }, null);
   });
   $('btn-edit-board').addEventListener('click', openBoardDialog);
   $('btn-edit-profile').addEventListener('click', () => openProfileDialog(ctx.state.profile));
@@ -140,19 +145,25 @@ function wireBanner() {
 }
 
 // ---------------- Button dialog ----------------
-function openButtonDialog(index, btn) {
-  editIndex = index;
+function openButtonDialog(target, btn) {
+  editTarget = target;
+  const isQF = target.kind === 'qf';
   pendingImage = btn?.image || null;
   pendingColor = btn?.color || '';
   pendingSound = btn?.soundId ? { soundId: btn.soundId } : null;
-  $('dlg-button-title').textContent = btn ? 'Edit button' : 'New button';
+  $('dlg-button-title').textContent = isQF
+    ? (btn ? 'Edit quick phrase' : 'New quick phrase')
+    : (btn ? 'Edit button' : 'New button');
   $('fld-label').value = btn?.label || '';
   $('fld-speak').value = btn?.speak || '';
   $('fld-hidden').checked = !!btn?.hidden;
+  // Quick Fires always speak; folders/notes/masking don't apply to them.
+  $('row-action').style.display = isQF ? 'none' : '';
+  $('row-hidden').style.display = isQF ? 'none' : '';
   $('btn-button-delete').style.display = btn ? '' : 'none';
   $('emoji-panel').hidden = true;
   $('symbol-panel').hidden = true;
-  renderActionOptions(btn);
+  if (!isQF) renderActionOptions(btn);
   renderColorRow();
   renderImagePreview();
   renderSoundRow();
@@ -313,10 +324,15 @@ function wireButtonDialog() {
   });
 
   $('btn-button-delete').addEventListener('click', async () => {
-    const board = currentBoard(ctx.state);
-    pushUndo();
-    board.cells[editIndex] = null;
-    await ctx.saveBoard(board);
+    if (editTarget.kind === 'qf') {
+      ctx.state.profile.quickFires.splice(editTarget.index, 1);
+      await ctx.saveProfile(ctx.state.profile);
+    } else {
+      const board = currentBoard(ctx.state);
+      pushUndo();
+      board.cells[editTarget.index] = null;
+      await ctx.saveBoard(board);
+    }
     $('dlg-button').close();
     ctx.rerender();
   });
@@ -361,15 +377,18 @@ async function runSymbolSearch() {
 
 async function saveButton() {
   const state = ctx.state;
-  const board = currentBoard(state);
-  pushUndo();
-  const existing = board.cells[editIndex];
+  const isQF = editTarget.kind === 'qf';
+  const board = isQF ? null : currentBoard(state);
+  if (!isQF) pushUndo();
+  const existing = isQF
+    ? (editTarget.index === -1 ? null : state.profile.quickFires[editTarget.index])
+    : board.cells[editTarget.index];
   const btn = existing || mkButton({ label: '' });
 
   btn.label = $('fld-label').value.trim();
   btn.speak = $('fld-speak').value.trim();
   btn.color = pendingColor;
-  btn.hidden = $('fld-hidden').checked;
+  if (!isQF) btn.hidden = $('fld-hidden').checked;
 
   // Persist a newly picked photo/symbol blob.
   if (pendingImage?.blob) {
@@ -390,6 +409,16 @@ async function saveButton() {
   }
   btn.soundId = pendingSound?.soundId || null;
 
+  if (isQF) {
+    btn.action = { type: 'speak' };
+    if (editTarget.index === -1) state.profile.quickFires.push(btn);
+    else state.profile.quickFires[editTarget.index] = btn;
+    await ctx.saveProfile(state.profile);
+    $('dlg-button').close();
+    ctx.rerender();
+    return;
+  }
+
   const actionValue = $('fld-action').value;
   if (actionValue === 'speak') {
     btn.action = { type: 'speak' };
@@ -409,7 +438,7 @@ async function saveButton() {
     btn.action = { type: 'board', boardId: actionValue.slice('board:'.length) };
   }
 
-  board.cells[editIndex] = btn;
+  board.cells[editTarget.index] = btn;
   await ctx.saveBoard(board);
   $('dlg-button').close();
   ctx.rerender();
@@ -504,6 +533,7 @@ export function openProfileDialog(profile) {
   $('fld-avatar').value = profile.avatar;
   $('fld-style').value = profile.style;
   $('fld-uisize').value = profile.uiSize || 'standard';
+  $('fld-sidebar').checked = profile.sidebar !== false;
   $('fld-holdms').value = String(profile.holdMs || 0);
   $('fld-rate').value = profile.rate;
   $('rate-value').textContent = `(${profile.rate}x)`;
@@ -536,6 +566,7 @@ function wireProfileDialog() {
     p.avatar = $('fld-avatar').value.trim() || p.avatar;
     p.style = $('fld-style').value;
     p.uiSize = $('fld-uisize').value;
+    p.sidebar = $('fld-sidebar').checked;
     p.holdMs = +$('fld-holdms').value;
     p.voiceURI = $('fld-voice').value;
     p.rate = +$('fld-rate').value;

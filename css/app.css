@@ -165,6 +165,58 @@ body[data-uisize="xl"] .cell .c-label { font-size: clamp(1.15rem, 4vmin, 1.8rem)
 .edit-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .edit-actions button { padding: .4em .7em; font-size: .9rem; }
 
+/* ============ Sidebar (Quick Fires + boards) ============ */
+.board-layout { flex: 1; display: flex; min-height: 0; }
+.sidebar {
+  width: 96px;
+  flex: none;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 6px calc(env(safe-area-inset-bottom, 0px) + 8px);
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+}
+.sidebar[hidden] { display: none; }
+.sb-header {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 6px 4px 0;
+}
+.sb-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  font-size: .72rem;
+  font-weight: 600;
+  min-height: 62px;
+  flex: none;
+}
+.sb-btn > span:last-child {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sb-img { font-size: 1.5rem; line-height: 1.1; }
+.sb-img img { width: 30px; height: 30px; object-fit: contain; display: block; }
+.sb-board.current { border-color: var(--accent); background: #eef1fd; }
+.sb-add { color: var(--muted); font-size: 1.3rem; justify-content: center; }
+.sb-btn.flash { animation: flash .45s ease; }
+
+body[data-uisize="large"] .sidebar { width: 118px; }
+body[data-uisize="large"] .sb-btn { min-height: 76px; font-size: .85rem; }
+body[data-uisize="large"] .sb-img { font-size: 1.9rem; }
+body[data-uisize="xl"] .sidebar { width: 142px; }
+body[data-uisize="xl"] .sb-btn { min-height: 92px; font-size: 1rem; }
+body[data-uisize="xl"] .sb-img { font-size: 2.3rem; }
+
 /* ============ Grid ============ */
 .grid {
   flex: 1;

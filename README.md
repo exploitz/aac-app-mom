@@ -34,6 +34,10 @@ on iPhone, iPad, Android, or any browser.
 - **Usage log for SLPs** - what was said and when, stored on-device only,
   exportable as CSV from the Grown-ups screen.
 - **Undo** - one tap reverses the last edit (up to 25 steps per session).
+- **Sidebar with Quick Fires + board shortcuts** - a persistent rail (TD Snap's
+  topic-bar idea): instant phrases ("Wait please", "I need a break") that speak
+  from any page, plus one-tap jumps to every board. Editable in edit mode,
+  per-profile on/off.
 - **Board folders** - buttons can open other boards.
 - **Per-person size setting** - Standard / Large / Extra-large scales the
   sentence-bar controls, navigation buttons, and labels per profile.

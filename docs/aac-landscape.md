@@ -115,6 +115,7 @@ touchchatapp.com). "Ours" reflects the deployed app.
 | Feature | Who has it | Ours |
 |---|---|---|
 | Word Finder / search with path to word | TouchChat (Word Finder(TM)), TD Snap | YES - search + "Home > food > cookie" path + jump & highlight |
+| Topic bar / Quickfires sidebar | TD Snap (Core First) | YES - editable instant phrases + board shortcuts, per-profile toggle |
 | Keyboard / typing with prediction | Proloquo2Go, TD Snap (Text page set) | YES - prediction ranks the child's own vocabulary + usage first |
 | Data logging for SLPs | TouchChat | YES - local-only log, CSV export |
 | Vocabulary masking (hide buttons, keep position) | Standard in premium apps | YES |

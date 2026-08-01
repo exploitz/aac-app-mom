@@ -112,6 +112,14 @@ export function flash(cell) {
   cell.classList.add('flash');
 }
 
+// Speak a button: recorded audio wins, device TTS otherwise.
+function speakButton(state, btn) {
+  const text = spokenText(btn);
+  if (btn.soundId) playSound(btn.soundId).then(ok => { if (!ok) speak(text, state.profile); });
+  else speak(text, state.profile);
+  return text;
+}
+
 // ---- Kid-mode tap ----
 export function kidTap(state, btn, cell) {
   if (!btn) return;
@@ -124,18 +132,76 @@ export function kidTap(state, btn, cell) {
     playNote(btn.action.freq);
     return;
   }
-  const text = spokenText(btn);
-  const voice = () => {
-    if (btn.soundId) playSound(btn.soundId).then(ok => { if (!ok) speak(text, state.profile); });
-    else speak(text, state.profile);
-  };
   if (state.profile.style === 'sentence') {
-    state.sentence.push({ label: btn.label, speak: text, image: btn.image });
+    state.sentence.push({ label: btn.label, speak: spokenText(btn), image: btn.image });
     renderSentence(state);
-    voice(); // the word sounds as it lands in the bar
+    speakButton(state, btn); // the word sounds as it lands in the bar
   } else {
-    voice();
-    logEvent(state.profile.id, 'word', text);
+    logEvent(state.profile.id, 'word', speakButton(state, btn));
+  }
+}
+
+// ---- Sidebar: Quick Fires + board shortcuts ----
+export function renderSidebar(state, onQuickFireEdit) {
+  const bar = document.getElementById('sidebar');
+  bar.hidden = state.profile.sidebar === false;
+  if (bar.hidden) return;
+  bar.innerHTML = '';
+
+  const header = (text) => {
+    const h = document.createElement('div');
+    h.className = 'sb-header';
+    h.textContent = text;
+    bar.appendChild(h);
+  };
+
+  header('⚡ Quick');
+  (state.profile.quickFires || []).forEach((qf, i) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sb-btn';
+    b.appendChild(imageNode(qf.image, 'sb-img'));
+    const label = document.createElement('span');
+    label.textContent = qf.label;
+    b.appendChild(label);
+    b.setAttribute('aria-label', spokenText(qf));
+    attachActivation(b, state, () => {
+      if (state.mode === 'edit') { onQuickFireEdit(i, qf); return; }
+      flash(b);
+      logEvent(state.profile.id, 'quickfire', speakButton(state, qf));
+    });
+    bar.appendChild(b);
+  });
+  if (state.mode === 'edit') {
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'sb-btn sb-add';
+    add.textContent = '＋';
+    add.setAttribute('aria-label', 'Add quick phrase');
+    add.addEventListener('click', () => onQuickFireEdit(-1, null));
+    bar.appendChild(add);
+  }
+
+  header('Boards');
+  const boards = [...state.boards.values()]
+    .sort((a, b) => (a.id === state.profile.homeBoardId ? -1 : b.id === state.profile.homeBoardId ? 1 : a.name.localeCompare(b.name)));
+  for (const board of boards) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'sb-btn sb-board' + (board.id === state.currentBoardId ? ' current' : '');
+    const icon = document.createElement('span');
+    icon.className = 'sb-img';
+    icon.textContent = board.id === state.profile.homeBoardId ? '🏠' : '📋';
+    const label = document.createElement('span');
+    label.textContent = board.name;
+    b.append(icon, label);
+    b.setAttribute('aria-label', `Go to ${board.name}`);
+    attachActivation(b, state, () => {
+      state.currentBoardId = board.id;
+      state.navStack = [];
+      state.rerender();
+    });
+    bar.appendChild(b);
   }
 }
 

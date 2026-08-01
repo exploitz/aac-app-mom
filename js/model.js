@@ -17,6 +17,8 @@ export function mkProfile({ name, style = 'simple', avatar = '🙂' } = {}) {
     rate: 1,
     uiSize: 'standard', // 'standard' | 'large' | 'xl' - scales controls & labels
     holdMs: 0,          // dwell time: press must be held this long to activate
+    sidebar: true,      // Quick Fires + board shortcuts rail
+    quickFires: null,   // null = fill with defaults on first open
   };
 }
 
