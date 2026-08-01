@@ -1,12 +1,13 @@
 // Offline-first service worker: pre-cache the app shell, serve cache-first.
 // Bump VERSION on every deploy so clients pick up new files.
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = `ourvoice-${VERSION}`;
 const SHELL = [
   './',
   './index.html',
   './css/app.css',
   './js/app.js',
+  './js/audio.js',
   './js/board.js',
   './js/backup.js',
   './js/db.js',

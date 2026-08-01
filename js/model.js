@@ -15,6 +15,7 @@ export function mkProfile({ name, style = 'simple', avatar = '🙂' } = {}) {
     homeBoardId: null,
     voiceURI: '',      // '' = device default voice
     rate: 1,
+    uiSize: 'standard', // 'standard' | 'large' | 'xl' - scales controls & labels
   };
 }
 
@@ -30,14 +31,16 @@ export function mkBoard({ profileId, name, rows, cols } = {}) {
   };
 }
 
-export function mkButton({ label, speak = '', image = null, color = '', action = null } = {}) {
+export function mkButton({ label, speak = '', image = null, color = '', action = null, soundId = null } = {}) {
   return {
     id: uid(),
     label,
     speak,                       // spoken text override; '' = speak the label
     image,                       // {type:'emoji',value} | {type:'image',imageId} | null
     color,                       // background tint, '' = default
-    action: action || { type: 'speak' },   // {type:'speak'} | {type:'board', boardId}
+    soundId,                     // recorded audio; plays instead of TTS when set
+    // {type:'speak'} | {type:'board', boardId} | {type:'note', freq}
+    action: action || { type: 'speak' },
   };
 }
 

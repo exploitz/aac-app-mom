@@ -88,6 +88,15 @@
         </div>
       </fieldset>
       <fieldset>
+        <legend>Recorded voice <small>(optional - plays instead of the robot voice)</small></legend>
+        <div class="sound-row">
+          <button type="button" id="btn-sound-record">🎙 Record</button>
+          <button type="button" id="btn-sound-play" hidden>▶ Listen</button>
+          <button type="button" id="btn-sound-remove" hidden>✕ Remove</button>
+          <span id="sound-status" class="hint"></span>
+        </div>
+      </fieldset>
+      <fieldset>
         <legend>Color</legend>
         <div id="color-row" class="color-row"></div>
       </fieldset>
@@ -118,6 +127,14 @@
           <input type="number" id="fld-rows" min="1" max="10" required>
         </label>
       </div>
+      <fieldset>
+        <legend>Add another board</legend>
+        <div class="two-col">
+          <select id="fld-template"></select>
+          <button type="button" id="btn-template-add">＋ Add board</button>
+        </div>
+        <p class="hint">A link button is placed in the first empty space of this board.</p>
+      </fieldset>
       <div class="dlg-buttons">
         <button type="button" id="btn-board-delete" class="danger">Delete board</button>
         <span class="spacer"></span>
@@ -150,6 +167,13 @@
         <input type="range" id="fld-rate" min="0.5" max="1.5" step="0.1">
       </label>
       <button type="button" id="btn-voice-test">🔊 Test voice</button>
+      <label>Button &amp; text size
+        <select id="fld-uisize">
+          <option value="standard">Standard</option>
+          <option value="large">Large</option>
+          <option value="xl">Extra large</option>
+        </select>
+      </label>
       <div class="dlg-buttons">
         <button type="button" id="btn-profile-delete" class="danger">Delete profile</button>
         <span class="spacer"></span>
@@ -172,6 +196,7 @@
         <button type="button" id="btn-export">⬇ Save backup</button>
         <button type="button" id="btn-import">⬆ Restore backup</button>
       </div>
+      <button type="button" id="btn-share">📤 Share to another device (AirDrop, Messages...)</button>
       <input type="file" id="fld-import" accept="application/json,.json" hidden>
       <p class="attribution">Free & open - symbols by <a href="https://arasaac.org" target="_blank" rel="noopener">ARASAAC</a> (CC BY-NC-SA). Text-to-speech uses this device's built-in voices.</p>
       <div class="dlg-buttons">

@@ -22,6 +22,7 @@ const state = {
 // ---------------- Rendering ----------------
 function rerender() {
   if (!state.profile) return;
+  document.body.dataset.uisize = state.profile.uiSize || 'standard';
   renderSentence(state);
   renderGrid(state, onCell);
 }
@@ -94,6 +95,15 @@ function toast(msg) {
   toastTimer = setTimeout(() => { el.hidden = true; }, 2600);
 }
 
+// Blobs owned by a board's buttons (photos, recordings) die with the board.
+async function deleteBoardMedia(board) {
+  for (const cell of board.cells) {
+    if (!cell) continue;
+    if (cell.image?.type === 'image' && cell.image.imageId) await db.del('images', cell.image.imageId);
+    if (cell.soundId) await db.del('sounds', cell.soundId);
+  }
+}
+
 // ---------------- Editor context ----------------
 const ctx = {
   state,
@@ -109,6 +119,7 @@ const ctx = {
     if (state.profile?.id === profile.id) state.profile = profile;
   },
   async deleteBoardDeep(board) {
+    await deleteBoardMedia(board);
     await db.del('boards', board.id);
     state.boards.delete(board.id);
     // Any button that opened this board falls back to speaking its label.
@@ -129,7 +140,10 @@ const ctx = {
     }
   },
   async deleteProfileDeep(profile) {
-    for (const b of await db.boardsForProfile(profile.id)) await db.del('boards', b.id);
+    for (const b of await db.boardsForProfile(profile.id)) {
+      await deleteBoardMedia(b);
+      await db.del('boards', b.id);
+    }
     await db.del('profiles', profile.id);
   },
   async addProfile(name) {

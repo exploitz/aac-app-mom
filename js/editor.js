@@ -4,8 +4,10 @@
 import { mkButton, mkBoard, resizeCells, swapCells, uid } from './model.js';
 import { getVoices, speak } from './speech.js';
 import { searchSymbols, downloadSymbol, resizePhoto } from './symbols.js';
-import { exportAll, importAll } from './backup.js';
+import { exportAll, importAll, shareAll } from './backup.js';
 import { currentBoard, imageNode } from './board.js';
+import { startRecording, stopRecording, isRecording, playBlobOnce, playSound, NOTES } from './audio.js';
+import { TEMPLATES, boardFromTemplate } from './seed.js';
 import * as db from './db.js';
 
 const $ = id => document.getElementById(id);
@@ -31,6 +33,7 @@ let ctx = null;
 let editIndex = -1;
 let pendingImage = null;   // {type:'emoji',value} | {type:'image',imageId} | {type:'image',blob}
 let pendingColor = '';
+let pendingSound = null;   // {soundId} (existing) | {blob} (fresh recording) | null
 
 export function initEditor(context) {
   ctx = context;
@@ -113,6 +116,7 @@ function openButtonDialog(index, btn) {
   editIndex = index;
   pendingImage = btn?.image || null;
   pendingColor = btn?.color || '';
+  pendingSound = btn?.soundId ? { soundId: btn.soundId } : null;
   $('dlg-button-title').textContent = btn ? 'Edit button' : 'New button';
   $('fld-label').value = btn?.label || '';
   $('fld-speak').value = btn?.speak || '';
@@ -122,8 +126,18 @@ function openButtonDialog(index, btn) {
   renderActionOptions(btn);
   renderColorRow();
   renderImagePreview();
+  renderSoundRow();
   $('dlg-button').showModal();
   if (!btn) $('fld-label').focus();
+}
+
+function renderSoundRow() {
+  const has = !!pendingSound;
+  $('btn-sound-record').textContent = isRecording() ? '⏹ Stop' : (has ? '🎙 Re-record' : '🎙 Record');
+  $('btn-sound-play').hidden = !has || isRecording();
+  $('btn-sound-remove').hidden = !has || isRecording();
+  $('sound-status').textContent = isRecording() ? 'Recording... tap Stop when done'
+    : has ? 'Recorded ✓' : '';
 }
 
 function renderImagePreview() {
@@ -158,17 +172,48 @@ function renderColorRow() {
 function renderActionOptions(btn) {
   const sel = $('fld-action');
   sel.innerHTML = '';
-  const optSpeak = new Option('Speak', 'speak');
-  sel.add(optSpeak);
+  sel.add(new Option('Speak', 'speak'));
   for (const board of ctx.state.boards.values()) {
     sel.add(new Option(`Open board: ${board.name}`, `board:${board.id}`));
   }
   sel.add(new Option('Open board: + New board...', 'newboard'));
-  sel.value = btn?.action?.type === 'board' ? `board:${btn.action.boardId}` : 'speak';
+  for (const n of NOTES) {
+    sel.add(new Option(`♪ Play note: ${n.name}`, `note:${n.freq}`));
+  }
+  sel.value = btn?.action?.type === 'board' ? `board:${btn.action.boardId}`
+    : btn?.action?.type === 'note' ? `note:${btn.action.freq}`
+    : 'speak';
 }
 
 function wireButtonDialog() {
   $('btn-button-cancel').addEventListener('click', () => $('dlg-button').close());
+
+  // Voice recording
+  $('btn-sound-record').addEventListener('click', async () => {
+    if (isRecording()) {
+      try {
+        const blob = await stopRecording();
+        pendingSound = { blob };
+      } catch {
+        ctx.toast('Recording failed');
+      }
+    } else {
+      try {
+        await startRecording();
+      } catch {
+        ctx.toast('Microphone not available - check permissions');
+      }
+    }
+    renderSoundRow();
+  });
+  $('btn-sound-play').addEventListener('click', async () => {
+    if (pendingSound?.blob) playBlobOnce(pendingSound.blob);
+    else if (pendingSound?.soundId) playSound(pendingSound.soundId);
+  });
+  $('btn-sound-remove').addEventListener('click', () => {
+    pendingSound = null;
+    renderSoundRow();
+  });
 
   // Emoji picker
   $('btn-img-emoji').addEventListener('click', () => {
@@ -302,9 +347,22 @@ async function saveButton() {
   }
   btn.image = pendingImage;
 
+  // Persist a fresh recording; clean up a replaced/removed one.
+  if (existing?.soundId && pendingSound?.soundId !== existing.soundId) {
+    await db.del('sounds', existing.soundId);
+  }
+  if (pendingSound?.blob) {
+    const soundId = uid();
+    await db.put('sounds', pendingSound.blob, soundId);
+    pendingSound = { soundId };
+  }
+  btn.soundId = pendingSound?.soundId || null;
+
   const actionValue = $('fld-action').value;
   if (actionValue === 'speak') {
     btn.action = { type: 'speak' };
+  } else if (actionValue.startsWith('note:')) {
+    btn.action = { type: 'note', freq: +actionValue.slice('note:'.length) };
   } else if (actionValue === 'newboard') {
     const name = prompt('Name for the new board:', btn.label || 'New board');
     if (name) {
@@ -333,11 +391,50 @@ function openBoardDialog() {
   $('fld-rows').value = board.rows;
   const isHome = board.id === ctx.state.profile.homeBoardId;
   $('btn-board-delete').style.display = isHome ? 'none' : '';
+  const tsel = $('fld-template');
+  tsel.innerHTML = '';
+  tsel.add(new Option('Blank board', 'blank'));
+  for (const [key, t] of Object.entries(TEMPLATES)) {
+    tsel.add(new Option(`${t.emoji} ${t.name}`, key));
+  }
   $('dlg-board').showModal();
+}
+
+async function addTemplateBoard() {
+  const state = ctx.state;
+  const key = $('fld-template').value;
+  let nb;
+  if (key === 'blank') {
+    const name = prompt('Name for the new board:', 'New board');
+    if (!name) return;
+    nb = mkBoard({ profileId: state.profile.id, name, rows: 3, cols: 3 });
+  } else {
+    nb = boardFromTemplate(key, state.profile.id);
+  }
+  await ctx.saveBoard(nb);
+  state.boards.set(nb.id, nb);
+  // Link it from the first empty cell of the current board.
+  const board = currentBoard(state);
+  const slot = board.cells.indexOf(null);
+  const emoji = key === 'blank' ? '📋' : TEMPLATES[key].emoji;
+  if (slot !== -1) {
+    board.cells[slot] = mkButton({
+      label: nb.name.toLowerCase(),
+      image: { type: 'emoji', value: emoji },
+      action: { type: 'board', boardId: nb.id },
+    });
+    await ctx.saveBoard(board);
+    ctx.toast(`"${nb.name}" added and linked`);
+  } else {
+    ctx.toast(`"${nb.name}" added - no empty space here, point any button at it`);
+  }
+  $('dlg-board').close();
+  ctx.rerender();
 }
 
 function wireBoardDialog() {
   $('btn-board-cancel').addEventListener('click', () => $('dlg-board').close());
+  $('btn-template-add').addEventListener('click', addTemplateBoard);
   $('btn-board-delete').addEventListener('click', async () => {
     const board = currentBoard(ctx.state);
     if (!confirm(`Delete the board "${board.name}"? Buttons that opened it will speak instead.`)) return;
@@ -372,6 +469,7 @@ export function openProfileDialog(profile) {
   $('fld-profile-name').value = profile.name;
   $('fld-avatar').value = profile.avatar;
   $('fld-style').value = profile.style;
+  $('fld-uisize').value = profile.uiSize || 'standard';
   $('fld-rate').value = profile.rate;
   $('rate-value').textContent = `(${profile.rate}x)`;
   const sel = $('fld-voice');
@@ -402,6 +500,7 @@ function wireProfileDialog() {
     p.name = $('fld-profile-name').value.trim() || p.name;
     p.avatar = $('fld-avatar').value.trim() || p.avatar;
     p.style = $('fld-style').value;
+    p.uiSize = $('fld-uisize').value;
     p.voiceURI = $('fld-voice').value;
     p.rate = +$('fld-rate').value;
     await ctx.saveProfile(p);
@@ -444,6 +543,10 @@ function wireAdminDialog() {
   $('btn-export').addEventListener('click', async () => {
     const n = await exportAll();
     ctx.toast(`Backup saved (${n.boards} boards, ${n.images} pictures)`);
+  });
+  $('btn-share').addEventListener('click', async () => {
+    const ok = await shareAll();
+    if (!ok) ctx.toast('Sharing not supported here - use Save backup instead');
   });
   $('btn-import').addEventListener('click', () => $('fld-import').click());
   $('fld-import').addEventListener('change', async e => {

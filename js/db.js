@@ -1,7 +1,8 @@
 // Tiny promise wrapper around IndexedDB. Stores:
-//   profiles (id), boards (id, index profileId), images (id -> Blob), meta (key)
+//   profiles (id), boards (id, index profileId), images (id -> Blob),
+//   sounds (id -> Blob, v2), meta (key)
 const DB_NAME = 'ourvoice';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let dbPromise = null;
 
@@ -17,6 +18,7 @@ export function openDB() {
         boards.createIndex('profileId', 'profileId');
       }
       if (!db.objectStoreNames.contains('images')) db.createObjectStore('images');
+      if (!db.objectStoreNames.contains('sounds')) db.createObjectStore('sounds');
       if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
     };
     req.onsuccess = () => resolve(req.result);
@@ -84,7 +86,7 @@ export async function boardsForProfile(profileId) {
 
 export async function clearAll() {
   const db = await openDB();
-  for (const store of ['profiles', 'boards', 'images', 'meta']) {
+  for (const store of ['profiles', 'boards', 'images', 'sounds', 'meta']) {
     await tx(db, store, 'readwrite', s => s.clear());
   }
 }

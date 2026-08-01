@@ -1,5 +1,6 @@
-// Full backup to a single JSON file (boards, profiles, photos as base64) and
-// restore from one. This is mom's safety net if a device breaks or is taken.
+// Full backup to a single JSON file (boards, profiles, photos, recordings)
+// and restore from one. This is mom's safety net if a device breaks or is
+// taken - and, via share, how boards travel between family devices.
 import * as db from './db.js';
 
 function blobToDataURL(blob) {
@@ -15,24 +16,51 @@ async function dataURLToBlob(dataURL) {
   return (await fetch(dataURL)).blob();
 }
 
-export async function exportAll() {
-  const [profiles, boards, imageKeys] = await Promise.all([
-    db.getAll('profiles'), db.getAll('boards'), db.getAllKeys('images'),
-  ]);
-  const images = {};
-  for (const key of imageKeys) {
-    const blob = await db.get('images', key);
-    if (blob) images[key] = await blobToDataURL(blob);
+async function storeToObject(store) {
+  const out = {};
+  for (const key of await db.getAllKeys(store)) {
+    const blob = await db.get(store, key);
+    if (blob) out[key] = await blobToDataURL(blob);
   }
-  const payload = { app: 'ourvoice', version: 1, exportedAt: new Date().toISOString(), profiles, boards, images };
-  const file = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+  return out;
+}
+
+async function buildPayload() {
+  const [profiles, boards, images, sounds] = await Promise.all([
+    db.getAll('profiles'), db.getAll('boards'), storeToObject('images'), storeToObject('sounds'),
+  ]);
+  return { app: 'ourvoice', version: 2, exportedAt: new Date().toISOString(), profiles, boards, images, sounds };
+}
+
+function payloadFile(payload) {
+  const stamp = payload.exportedAt.slice(0, 10);
+  return new File([JSON.stringify(payload)], `ourvoice-backup-${stamp}.json`, { type: 'application/json' });
+}
+
+export async function exportAll() {
+  const payload = await buildPayload();
+  const file = payloadFile(payload);
   const a = document.createElement('a');
   a.href = URL.createObjectURL(file);
-  const stamp = payload.exportedAt.slice(0, 10);
-  a.download = `ourvoice-backup-${stamp}.json`;
+  a.download = file.name;
   a.click();
   URL.revokeObjectURL(a.href);
-  return { profiles: profiles.length, boards: boards.length, images: imageKeys.length };
+  return { profiles: payload.profiles.length, boards: payload.boards.length, images: Object.keys(payload.images).length };
+}
+
+// One-tap transfer: AirDrop / Messages / email via the system share sheet.
+// Returns false when the platform can't share files (caller falls back).
+export async function shareAll() {
+  const payload = await buildPayload();
+  const file = payloadFile(payload);
+  if (!navigator.canShare || !navigator.canShare({ files: [file] })) return false;
+  try {
+    await navigator.share({ files: [file], title: 'Our Voice boards' });
+    return true;
+  } catch (err) {
+    if (err.name === 'AbortError') return true; // user closed the sheet - not an error
+    return false;
+  }
 }
 
 export async function importAll(file) {
@@ -45,6 +73,9 @@ export async function importAll(file) {
   for (const b of payload.boards) await db.put('boards', b);
   for (const [key, dataURL] of Object.entries(payload.images || {})) {
     await db.put('images', await dataURLToBlob(dataURL), key);
+  }
+  for (const [key, dataURL] of Object.entries(payload.sounds || {})) {
+    await db.put('sounds', await dataURLToBlob(dataURL), key);
   }
   return { profiles: payload.profiles.length, boards: payload.boards.length };
 }

@@ -1,6 +1,7 @@
 // Board rendering + kid-mode interaction. DOM only - state lives in app.js.
 import { spokenText } from './model.js';
 import { speak } from './speech.js';
+import { playSound, playNote } from './audio.js';
 import * as db from './db.js';
 
 const $ = id => document.getElementById(id);
@@ -91,13 +92,21 @@ export function kidTap(state, btn, cell) {
     navigateTo(state, btn.action.boardId);
     return;
   }
+  if (btn.action?.type === 'note') {
+    playNote(btn.action.freq);
+    return;
+  }
   const text = spokenText(btn);
+  const voice = () => {
+    if (btn.soundId) playSound(btn.soundId).then(ok => { if (!ok) speak(text, state.profile); });
+    else speak(text, state.profile);
+  };
   if (state.profile.style === 'sentence') {
     state.sentence.push({ label: btn.label, speak: text, image: btn.image });
     renderSentence(state);
-    speak(text, state.profile); // speak the word as it lands in the bar
+    voice(); // the word sounds as it lands in the bar
   } else {
-    speak(text, state.profile);
+    voice();
   }
 }
 

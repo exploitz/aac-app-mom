@@ -8,7 +8,7 @@ App Stores, licenses, or state funding decisions.
 No build step, no server, no accounts. Plain HTML/CSS/JS, installable as a PWA
 on iPhone, iPad, Android, or any browser.
 
-## Features (v1)
+## Features
 
 - **Two board styles per profile:**
   - *Simple* - tap a button, the device speaks it right away (SoundingBoard-style).
@@ -16,7 +16,16 @@ on iPhone, iPad, Android, or any browser.
     (TD Snap-style).
 - **Text-to-speech by default** using the device's built-in voices (offline, free).
   Voice and speed are per-profile.
-- **Board folders** - buttons can open other boards (Food, Feelings, ...).
+- **Recorded voice (optional)** - record a real voice on any button; it plays
+  instead of the robot voice. Great for "I love you" in Mom's voice.
+- **Music board** - AUMI-inspired pentatonic pads (plus drum and chime). Any
+  combination sounds musical: no wrong notes, pure cause-and-effect joy.
+- **Template board library** - Feelings, Food, People, Body & Hurt, School,
+  Weather, Music. Add one to any profile from Board settings; a link button is
+  placed automatically.
+- **Board folders** - buttons can open other boards.
+- **Per-person size setting** - Standard / Large / Extra-large scales the
+  sentence-bar controls, navigation buttons, and labels per profile.
 - **Edit mode for grown-ups** (hold the gear ~1 second): add/edit/delete/move
   buttons, resize grids, add boards and profiles.
 - **Three picture sources:** emoji (works offline instantly), your own photos
@@ -24,8 +33,9 @@ on iPhone, iPad, Android, or any browser.
   symbol so it works offline afterwards).
 - **Color coding** with a modified-Fitzgerald starter palette.
 - **Offline-first:** after the first visit everything runs with no internet.
-- **Backup/restore** - one JSON file containing all profiles, boards, and photos.
-  Save it anywhere; restore onto any other device.
+- **Backup, restore & share** - everything (profiles, boards, photos,
+  recordings) in one JSON file. Save it, or send it straight to another device
+  with the system share sheet (AirDrop, Messages, email) and Restore there.
 
 ## Run it locally
 
@@ -63,8 +73,13 @@ node tools/make-icons.mjs          # regenerate icons/ (no dependencies)
 
 Board data is modeled on the [Open Board Format](https://www.openboardformat.org/)
 (`js/model.js` includes an OBF exporter); `.obf`/`.obz` file import/export is a
-planned milestone, as are cross-device sync, switch scanning, and an
-AUMI-inspired music/play board.
+planned milestone, as are automatic cross-device sync (needs a small backend)
+and switch-scanning access.
+
+Note: recordings are stored in the browser's native format (AAC on iOS,
+WebM on Android/Chrome). A recording made on one platform may not play on the
+other - record on the device the child uses, or use share/restore between
+same-platform devices.
 
 ## Licenses & attribution
 

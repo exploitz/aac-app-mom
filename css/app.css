@@ -84,8 +84,8 @@ button.ghost { background: transparent; border-color: transparent; color: var(--
   border-bottom: 1px solid var(--border);
 }
 .nav-btn {
-  min-width: 52px;
-  min-height: 52px;
+  min-width: 56px;
+  min-height: 56px;
   font-size: 1.5rem;
   flex: none;
 }
@@ -127,7 +127,22 @@ button.ghost { background: transparent; border-color: transparent; color: var(--
 }
 .sentence-words .word .w-img { font-size: 1.5rem; line-height: 1.2; }
 .sentence-words .word .w-img img { height: 28px; width: 28px; object-fit: contain; }
-.bar-btn { min-width: 52px; font-size: 1.3rem; flex: none; }
+.bar-btn { min-width: 56px; font-size: 1.4rem; flex: none; }
+
+/* ---- Per-profile size scaling (profile settings -> Button & text size) ---- */
+body[data-uisize="large"] .nav-btn,
+body[data-uisize="large"] .bar-btn { min-width: 72px; min-height: 72px; font-size: 1.9rem; }
+body[data-uisize="large"] .sentence-words { min-height: 72px; }
+body[data-uisize="large"] .sentence-words .word { font-size: .9rem; max-width: 90px; }
+body[data-uisize="large"] .sentence-words .word .w-img { font-size: 1.9rem; }
+body[data-uisize="large"] .cell .c-label { font-size: clamp(1rem, 3.4vmin, 1.5rem); }
+
+body[data-uisize="xl"] .nav-btn,
+body[data-uisize="xl"] .bar-btn { min-width: 92px; min-height: 92px; font-size: 2.4rem; }
+body[data-uisize="xl"] .sentence-words { min-height: 92px; }
+body[data-uisize="xl"] .sentence-words .word { font-size: 1.05rem; max-width: 110px; }
+body[data-uisize="xl"] .sentence-words .word .w-img { font-size: 2.4rem; }
+body[data-uisize="xl"] .cell .c-label { font-size: clamp(1.15rem, 4vmin, 1.8rem); }
 
 /* ============ Edit banner ============ */
 .edit-banner {
@@ -276,6 +291,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
 .symbol-results button { padding: 4px; }
 .symbol-results img { width: 100%; aspect-ratio: 1/1; object-fit: contain; }
 .attribution { font-size: .78rem; color: var(--muted); margin: 0; }
+
+.sound-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px; }
 
 .color-row { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; }
 .color-row button {
