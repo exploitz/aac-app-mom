@@ -40,11 +40,14 @@
         <button id="btn-sentence-clear" class="bar-btn" type="button" aria-label="Clear sentence">✕</button>
       </div>
       <div id="board-title" class="board-title"></div>
+      <button id="btn-keyboard" class="nav-btn" type="button" aria-label="Type to talk">⌨️</button>
+      <button id="btn-find" class="nav-btn" type="button" aria-label="Find a word">🔎</button>
       <button id="btn-gear" class="nav-btn gear" type="button" aria-label="Hold for edit mode">⚙</button>
     </header>
     <div id="edit-banner" class="edit-banner" hidden>
       <span id="edit-banner-text">Editing - tap a button to change it</span>
       <span class="edit-actions">
+        <button id="btn-edit-undo" type="button">&#8630; Undo</button>
         <button id="btn-edit-add" type="button">＋ Add</button>
         <button id="btn-edit-move" type="button">&#8644; Move</button>
         <button id="btn-edit-board" type="button">Board</button>
@@ -55,6 +58,33 @@
     </div>
     <main id="grid" class="grid"></main>
   </section>
+
+  <!-- ============ Keyboard (type to talk) ============ -->
+  <section id="view-keyboard" class="view" hidden>
+    <header class="board-header">
+      <button id="btn-kb-close" class="nav-btn" type="button" aria-label="Back to board">&#8592;</button>
+      <div class="board-title">Type to talk</div>
+      <span class="nav-btn" aria-hidden="true" style="visibility:hidden">&#8592;</span>
+    </header>
+    <div class="kb-body">
+      <textarea id="kb-text" rows="3" placeholder="Type here..." aria-label="Text to speak"></textarea>
+      <div id="kb-chips" class="kb-chips" aria-label="Word suggestions"></div>
+      <div class="kb-actions">
+        <button id="btn-kb-speak" class="primary" type="button">🔊 Speak</button>
+        <button id="btn-kb-clear" type="button">✕ Clear</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ Word Finder dialog ============ -->
+  <dialog id="dlg-find">
+    <form method="dialog" class="dlg-form">
+      <h2>Find a word</h2>
+      <input type="search" id="fld-find" placeholder="Type a word..." aria-label="Word to find" autocomplete="off">
+      <div id="find-results" class="find-results"></div>
+      <div class="dlg-buttons"><span class="spacer"></span><button type="submit">Close</button></div>
+    </form>
+  </dialog>
 
   <!-- ============ Button editor dialog ============ -->
   <dialog id="dlg-button">
@@ -102,6 +132,10 @@
       </fieldset>
       <label>When tapped
         <select id="fld-action"></select>
+      </label>
+      <label class="check-row">
+        <input type="checkbox" id="fld-hidden">
+        <span>Hide for now <small>(teaching tool: invisible to the child, keeps its spot)</small></span>
       </label>
       <div class="dlg-buttons">
         <button type="button" id="btn-button-delete" class="danger">Delete</button>
@@ -174,6 +208,14 @@
           <option value="xl">Extra large</option>
         </select>
       </label>
+      <label>Hold to activate <small>(helps with shaky or exploring hands)</small>
+        <select id="fld-holdms">
+          <option value="0">Off - taps work instantly</option>
+          <option value="300">Short hold (0.3s)</option>
+          <option value="600">Medium hold (0.6s)</option>
+          <option value="1000">Long hold (1s)</option>
+        </select>
+      </label>
       <div class="dlg-buttons">
         <button type="button" id="btn-profile-delete" class="danger">Delete profile</button>
         <span class="spacer"></span>
@@ -198,9 +240,17 @@
       </div>
       <button type="button" id="btn-share">📤 Share to another device (AirDrop, Messages...)</button>
       <input type="file" id="fld-import" accept="application/json,.json" hidden>
+      <hr>
+      <h3>What they've said</h3>
+      <p class="hint">Recent speech stays on this device only. Export for a speech therapist.</p>
+      <div id="history-list" class="history-list"></div>
+      <div class="two-col">
+        <button type="button" id="btn-log-export">⬇ Export log (CSV)</button>
+        <button type="button" id="btn-log-clear">✕ Clear log</button>
+      </div>
       <p class="attribution">Free & open - symbols by <a href="https://arasaac.org" target="_blank" rel="noopener">ARASAAC</a> (CC BY-NC-SA). Text-to-speech uses this device's built-in voices.</p>
       <!-- Keep this number in step with VERSION in sw.js -->
-      <p class="attribution">Our Voice version 3</p>
+      <p class="attribution">Our Voice version 4</p>
       <div class="dlg-buttons">
         <span class="spacer"></span>
         <button type="submit" class="primary">Close</button>

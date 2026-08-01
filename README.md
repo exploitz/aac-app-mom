@@ -23,6 +23,17 @@ on iPhone, iPad, Android, or any browser.
 - **Template board library** - Feelings, Food, People, Body & Hurt, School,
   Weather, Music. Add one to any profile from Board settings; a link button is
   placed automatically.
+- **Word Finder** - search every board for a word; results show the tap path
+  ("Home > food > cookie"), and tapping jumps there and highlights the button.
+- **Type-to-talk keyboard with prediction** - a typing view whose word
+  suggestions rank the child's own board vocabulary and past speech first.
+- **Vocabulary masking** - hide any button for teaching; it keeps its grid spot
+  (motor plan preserved) and reappears with one checkbox.
+- **Hold-to-activate** - per-profile dwell time (0.3-1s) so brushes and
+  accidental touches don't trigger speech.
+- **Usage log for SLPs** - what was said and when, stored on-device only,
+  exportable as CSV from the Grown-ups screen.
+- **Undo** - one tap reverses the last edit (up to 25 steps per session).
 - **Board folders** - buttons can open other boards.
 - **Per-person size setting** - Standard / Large / Extra-large scales the
   sentence-bar controls, navigation buttons, and labels per profile.

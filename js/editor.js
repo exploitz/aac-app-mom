@@ -44,11 +44,37 @@ export function initEditor(context) {
   wireAdminDialog();
 }
 
+// ---------------- Undo (session-scoped, board-level snapshots) ----------------
+const undoStack = [];
+
+function pushUndo() {
+  const b = currentBoard(ctx.state);
+  undoStack.push(JSON.stringify({ id: b.id, rows: b.rows, cols: b.cols, name: b.name, cells: b.cells }));
+  if (undoStack.length > 25) undoStack.shift();
+}
+
+async function undo() {
+  const snap = undoStack.pop();
+  if (!snap) { ctx.toast('Nothing to undo'); return; }
+  const s = JSON.parse(snap);
+  const b = ctx.state.boards.get(s.id);
+  if (!b) { ctx.toast('That board no longer exists'); return; }
+  Object.assign(b, { rows: s.rows, cols: s.cols, name: s.name, cells: s.cells });
+  await ctx.saveBoard(b);
+  if (ctx.state.currentBoardId !== b.id) {
+    ctx.state.currentBoardId = b.id;
+    ctx.state.navStack = [];
+  }
+  ctx.toast('Undone');
+  ctx.rerender();
+}
+
 // ---------------- Mode ----------------
 export function enterEdit() {
   ctx.state.mode = 'edit';
   ctx.state.moveSrc = null;
   ctx.state.moveMode = false;
+  undoStack.length = 0;
   $('edit-banner').hidden = false;
   ctx.rerender();
 }
@@ -78,6 +104,7 @@ export async function editCellTap(index, btn) {
       state.moveSrc = index;
     } else {
       const board = currentBoard(state);
+      pushUndo();
       board.cells = swapCells(board.cells, state.moveSrc, index);
       state.moveSrc = null;
       await ctx.saveBoard(board);
@@ -91,6 +118,7 @@ export async function editCellTap(index, btn) {
 // ---------------- Banner ----------------
 function wireBanner() {
   $('btn-edit-done').addEventListener('click', exitEdit);
+  $('btn-edit-undo').addEventListener('click', undo);
   $('btn-edit-move').addEventListener('click', () => {
     ctx.state.moveMode = !ctx.state.moveMode;
     ctx.state.moveSrc = null;
@@ -108,7 +136,7 @@ function wireBanner() {
   });
   $('btn-edit-board').addEventListener('click', openBoardDialog);
   $('btn-edit-profile').addEventListener('click', () => openProfileDialog(ctx.state.profile));
-  $('btn-edit-backup').addEventListener('click', () => $('dlg-admin').showModal());
+  $('btn-edit-backup').addEventListener('click', () => ctx.openAdmin());
 }
 
 // ---------------- Button dialog ----------------
@@ -120,6 +148,7 @@ function openButtonDialog(index, btn) {
   $('dlg-button-title').textContent = btn ? 'Edit button' : 'New button';
   $('fld-label').value = btn?.label || '';
   $('fld-speak').value = btn?.speak || '';
+  $('fld-hidden').checked = !!btn?.hidden;
   $('btn-button-delete').style.display = btn ? '' : 'none';
   $('emoji-panel').hidden = true;
   $('symbol-panel').hidden = true;
@@ -285,6 +314,7 @@ function wireButtonDialog() {
 
   $('btn-button-delete').addEventListener('click', async () => {
     const board = currentBoard(ctx.state);
+    pushUndo();
     board.cells[editIndex] = null;
     await ctx.saveBoard(board);
     $('dlg-button').close();
@@ -332,12 +362,14 @@ async function runSymbolSearch() {
 async function saveButton() {
   const state = ctx.state;
   const board = currentBoard(state);
+  pushUndo();
   const existing = board.cells[editIndex];
   const btn = existing || mkButton({ label: '' });
 
   btn.label = $('fld-label').value.trim();
   btn.speak = $('fld-speak').value.trim();
   btn.color = pendingColor;
+  btn.hidden = $('fld-hidden').checked;
 
   // Persist a newly picked photo/symbol blob.
   if (pendingImage?.blob) {
@@ -417,6 +449,7 @@ async function addTemplateBoard() {
   const board = currentBoard(state);
   const slot = board.cells.indexOf(null);
   const emoji = key === 'blank' ? '📋' : TEMPLATES[key].emoji;
+  if (slot !== -1) pushUndo();
   if (slot !== -1) {
     board.cells[slot] = mkButton({
       label: nb.name.toLowerCase(),
@@ -445,6 +478,7 @@ function wireBoardDialog() {
   $('form-board').addEventListener('submit', async e => {
     e.preventDefault();
     const board = currentBoard(ctx.state);
+    pushUndo();
     const rows = Math.max(1, Math.min(10, +$('fld-rows').value || board.rows));
     const cols = Math.max(1, Math.min(10, +$('fld-cols').value || board.cols));
     board.name = $('fld-board-name').value.trim() || board.name;
@@ -470,6 +504,7 @@ export function openProfileDialog(profile) {
   $('fld-avatar').value = profile.avatar;
   $('fld-style').value = profile.style;
   $('fld-uisize').value = profile.uiSize || 'standard';
+  $('fld-holdms').value = String(profile.holdMs || 0);
   $('fld-rate').value = profile.rate;
   $('rate-value').textContent = `(${profile.rate}x)`;
   const sel = $('fld-voice');
@@ -501,6 +536,7 @@ function wireProfileDialog() {
     p.avatar = $('fld-avatar').value.trim() || p.avatar;
     p.style = $('fld-style').value;
     p.uiSize = $('fld-uisize').value;
+    p.holdMs = +$('fld-holdms').value;
     p.voiceURI = $('fld-voice').value;
     p.rate = +$('fld-rate').value;
     await ctx.saveProfile(p);

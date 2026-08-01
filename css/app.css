@@ -218,6 +218,17 @@ body[data-uisize="xl"] .cell .c-label { font-size: clamp(1.15rem, 4vmin, 1.8rem)
 .cell.empty:disabled { border-color: transparent; }
 .cell.empty .add-hint { color: var(--muted); font-size: 1.6rem; font-weight: 400; }
 .cell.move-src { outline: 4px solid #f59f00; outline-offset: -4px; }
+.cell.masked { opacity: .35; }
+.cell.holding { transform: scale(.94); outline: 4px solid var(--accent); outline-offset: -4px; }
+.cell.found { animation: found 2.6s ease; }
+@keyframes found {
+  0%, 60% { outline: 6px solid #f59f00; outline-offset: -6px; }
+  100% { outline: 0 solid transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cell.flash, .cell.found { animation: none; outline: 6px solid var(--accent); outline-offset: -6px; }
+  .cell:active, .cell.holding { transform: none; }
+}
 
 /* ============ Dialogs ============ */
 dialog {
@@ -302,6 +313,54 @@ hr { border: none; border-top: 1px solid var(--border); margin: 6px 0; }
   padding: 0;
 }
 .color-row button.selected { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+/* Keyboard (type to talk) */
+.kb-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+}
+#kb-text {
+  font: inherit;
+  font-size: 1.6rem;
+  padding: .6em;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  resize: none;
+  width: 100%;
+}
+.kb-chips { display: flex; gap: 8px; flex-wrap: wrap; min-height: 52px; }
+.chip {
+  font-size: 1.15rem;
+  padding: .5em 1em;
+  border-radius: 999px;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  background: var(--panel);
+}
+.kb-actions { display: flex; gap: 10px; }
+.kb-actions button { flex: 1; min-height: 64px; font-size: 1.3rem; }
+
+/* Word finder + history rows */
+.find-results, .history-list { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; }
+.find-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  padding: .6em .8em;
+}
+.find-row strong { font-size: 1.05rem; }
+.find-path { font-size: .85rem; color: var(--muted); }
+
+.dlg-form label.check-row { flex-direction: row; align-items: center; gap: 8px; }
+.check-row input { width: 22px; height: 22px; }
 
 /* Admin */
 .admin-list { display: flex; flex-direction: column; gap: 6px; }

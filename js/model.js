@@ -16,6 +16,7 @@ export function mkProfile({ name, style = 'simple', avatar = '🙂' } = {}) {
     voiceURI: '',      // '' = device default voice
     rate: 1,
     uiSize: 'standard', // 'standard' | 'large' | 'xl' - scales controls & labels
+    holdMs: 0,          // dwell time: press must be held this long to activate
   };
 }
 
@@ -39,6 +40,7 @@ export function mkButton({ label, speak = '', image = null, color = '', action =
     image,                       // {type:'emoji',value} | {type:'image',imageId} | null
     color,                       // background tint, '' = default
     soundId,                     // recorded audio; plays instead of TTS when set
+    hidden: false,               // vocabulary masking: invisible in kid mode, space kept
     // {type:'speak'} | {type:'board', boardId} | {type:'note', freq}
     action: action || { type: 'speak' },
   };

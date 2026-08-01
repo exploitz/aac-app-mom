@@ -2,6 +2,7 @@
 import { spokenText } from './model.js';
 import { speak } from './speech.js';
 import { playSound, playNote } from './audio.js';
+import { logEvent } from './log.js';
 import * as db from './db.js';
 
 const $ = id => document.getElementById(id);
@@ -47,8 +48,10 @@ export function renderGrid(state, onCell) {
     const cell = document.createElement('button');
     cell.type = 'button';
     cell.dataset.index = i;
-    if (btn) {
+    const maskedInKidMode = btn?.hidden && state.mode !== 'edit';
+    if (btn && !maskedInKidMode) {
       cell.className = 'cell' + (btn.action?.type === 'board' ? ' folder' : '');
+      if (btn.hidden) cell.classList.add('masked'); // edit mode: dimmed, still editable
       if (btn.color) cell.style.background = btn.color;
       cell.appendChild(imageNode(btn.image));
       const label = document.createElement('div');
@@ -57,6 +60,7 @@ export function renderGrid(state, onCell) {
       cell.appendChild(label);
       cell.setAttribute('aria-label', btn.label);
     } else {
+      // Empty cell, or a masked button in kid mode (space kept, invisible).
       cell.className = 'cell empty';
       if (state.mode === 'edit') {
         const hint = document.createElement('span');
@@ -70,11 +74,35 @@ export function renderGrid(state, onCell) {
       }
     }
     if (state.mode === 'edit' && state.moveSrc === i) cell.classList.add('move-src');
-    cell.addEventListener('click', () => onCell(i, btn, cell));
+    attachActivation(cell, state, () => onCell(i, maskedInKidMode ? null : btn, cell));
     grid.appendChild(cell);
   });
   $('board-title').textContent = board.name;
   $('btn-back').style.visibility = state.navStack.length ? 'visible' : 'hidden';
+}
+
+// Dwell support: with holdMs set, a press must be held before it activates -
+// brushes and accidental touches do nothing. Edit mode always uses plain taps.
+function attachActivation(cell, state, fire) {
+  const holdMs = state.mode === 'edit' ? 0 : (state.profile.holdMs || 0);
+  if (!holdMs) {
+    cell.addEventListener('click', fire);
+    return;
+  }
+  let downAt = 0;
+  cell.addEventListener('pointerdown', () => {
+    downAt = performance.now();
+    cell.classList.add('holding');
+  });
+  const cancel = () => { downAt = 0; cell.classList.remove('holding'); };
+  cell.addEventListener('pointerup', () => {
+    const held = performance.now() - downAt;
+    const ok = downAt && held >= holdMs;
+    cancel();
+    if (ok) fire();
+  });
+  cell.addEventListener('pointerleave', cancel);
+  cell.addEventListener('pointercancel', cancel);
 }
 
 export function flash(cell) {
@@ -107,6 +135,7 @@ export function kidTap(state, btn, cell) {
     voice(); // the word sounds as it lands in the bar
   } else {
     voice();
+    logEvent(state.profile.id, 'word', text);
   }
 }
 
@@ -146,5 +175,8 @@ export function renderSentence(state) {
 
 export function speakSentence(state) {
   const text = state.sentence.map(w => w.speak).join(' ');
-  if (text) speak(text, state.profile);
+  if (text) {
+    speak(text, state.profile);
+    logEvent(state.profile.id, 'sentence', text);
+  }
 }

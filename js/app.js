@@ -4,6 +4,7 @@ import { mkProfile, mkBoard } from './model.js';
 import { seedIfEmpty } from './seed.js';
 import { renderGrid, renderSentence, kidTap, goBack, speakSentence } from './board.js';
 import { initEditor, enterEdit, editCellTap, renderAdminProfiles } from './editor.js';
+import { initTools, renderHistory } from './tools.js';
 
 const $ = id => document.getElementById(id);
 
@@ -110,6 +111,11 @@ const ctx = {
   toast,
   rerender,
   showPicker,
+  openAdmin() {
+    renderAdminProfiles();
+    renderHistory();
+    $('dlg-admin').showModal();
+  },
   async saveBoard(board) {
     await db.put('boards', board);
     state.boards.set(board.id, board);
@@ -189,10 +195,7 @@ function wire() {
     renderSentence(state);
   });
 
-  $('btn-picker-settings').addEventListener('click', () => {
-    renderAdminProfiles();
-    $('dlg-admin').showModal();
-  });
+  $('btn-picker-settings').addEventListener('click', () => ctx.openAdmin());
   $('dlg-admin').addEventListener('close', () => {
     // Profiles may have been added/renamed/deleted.
     if (!state.profile) showPicker();
@@ -202,6 +205,7 @@ function wire() {
 // ---------------- Boot ----------------
 async function main() {
   initEditor(ctx);
+  initTools(ctx);
   wire();
   await seedIfEmpty();
   await showPicker();

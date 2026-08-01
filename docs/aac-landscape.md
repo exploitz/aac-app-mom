@@ -107,6 +107,31 @@ the user anyway.
   school Chromebook, or the funded iPads — a denial or a broken device never again means
   losing a voice.
 
+## Premium feature matrix (researched 2026-08-01)
+
+From the vendors' own product pages (assistiveware.com, us.tobiidynavox.com,
+touchchatapp.com). "Ours" reflects the deployed app.
+
+| Feature | Who has it | Ours |
+|---|---|---|
+| Word Finder / search with path to word | TouchChat (Word Finder(TM)), TD Snap | YES - search + "Home > food > cookie" path + jump & highlight |
+| Keyboard / typing with prediction | Proloquo2Go, TD Snap (Text page set) | YES - prediction ranks the child's own vocabulary + usage first |
+| Data logging for SLPs | TouchChat | YES - local-only log, CSV export |
+| Vocabulary masking (hide buttons, keep position) | Standard in premium apps | YES |
+| Dwell / hold-to-activate timing | TouchChat (dwell + release time) | YES - per-profile Off/0.3/0.6/1s |
+| Recorded speech per button | TouchChat, SoundingBoard | YES |
+| Grid sizes | P2G: 23 layouts 9-144; TouchChat: 25-108 | YES - any grid 1x1 to 10x10 |
+| Undo while editing | Premium editors | YES (session, 25 levels) |
+| Auto-backup to cloud | TouchChat (iCloud/Drive/Dropbox, keeps 3 versions) | Partial - manual file backup/share; auto-sync needs a backend (pending) |
+| Copy/paste + drag buttons | TouchChat | Partial - swap-move only |
+| Grammar support (conjugation, plurals) | Proloquo2Go (Crescendo) | No - candidate for next round |
+| Premium voices (Acapela children's voices) | P2G: 100+ voices | No - device voices only (licensed voices cost money; Apple's built-ins are decent) |
+| Symbol libraries 27k-40k (PCS, SymbolStix) | All three | Different - ARASAAC/open sets + photos (proprietary sets can't be licensed for free) |
+| Eye gaze / head tracking | TD Snap, TouchChat | No - hardware-dependent, out of scope for a free web app |
+| Switch scanning | All three | No - on the roadmap (keyboard-interface switches are web-reachable) |
+| Bilingual mid-sentence switching | Proloquo2Go | No |
+| Visual scene displays | TD Snap ecosystem | No |
+
 ## Recommendation
 
 Build a **PWA (installable web app), offline-first**, because:
