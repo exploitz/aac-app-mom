@@ -585,6 +585,11 @@ function wireAdminDialog() {
     if (!ok) ctx.toast('Sharing not supported here - use Save backup instead');
   });
   $('btn-import').addEventListener('click', () => $('fld-import').click());
+  $('btn-reset').addEventListener('click', async () => {
+    if (!confirm('Erase ALL profiles, boards, photos, and recordings, and start over with the newest starter boards?')) return;
+    await db.clearAll();
+    location.reload(); // empty database -> first-run seeding kicks in
+  });
   $('fld-import').addEventListener('change', async e => {
     const file = e.target.files[0];
     e.target.value = '';

@@ -38,6 +38,11 @@ button {
   padding: .55em .9em;
   cursor: pointer;
   touch-action: manipulation;
+  /* No text selection or iOS long-press callout on any control -
+     holding the gear must not highlight its glyph. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 button.danger { color: var(--danger); border-color: var(--danger); background: #fff; }
